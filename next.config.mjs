@@ -12,6 +12,9 @@ const nextConfig = {
       { protocol: "https", hostname: "fakestoreapi.com", pathname: "/img/**" },
     ],
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   
 };
 

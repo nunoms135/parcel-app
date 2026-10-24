@@ -51,3 +51,4 @@ export function formatPrice(value) {
     currency: "USD",
   }).format(value);
 }
+
