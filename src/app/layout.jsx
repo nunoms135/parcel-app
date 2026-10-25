@@ -1,4 +1,5 @@
 import localFont from "next/font/local";
+import { Suspense } from "react";
 import Header from "@/components/Header";
 import "./globals.css";
 
@@ -22,7 +23,9 @@ export default function RootLayout({ children }) {
         <a href="#main" className="skip-link">
           Skip to content
         </a>
-        <Header />
+        <Suspense fallback={<div />}>
+          <Header />
+        </Suspense>
         <main id="main" className="wrap">
           {children}
         </main>
