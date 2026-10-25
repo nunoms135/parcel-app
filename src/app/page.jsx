@@ -1,5 +1,6 @@
 import ProductBrowser from "@/components/ProductBrowser";
 import { getProducts } from "@/lib/api";
+export const instant = false;
 
 export default async function HomePage() {
   const products = await getProducts();
