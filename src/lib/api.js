@@ -1,12 +1,24 @@
 
-const BASE_URL = "https://fakestoreapi.com";
+const BASE_URL = "https://dummyjson.com";
 const REVALIDATE_SECONDS = 3600;
 
-// Mengambil semua produk
+// Menyesuaikan format DummyJSON dengan format
+// produk yang digunakan oleh komponen aplikasi.
+function normalizeProduct(product) {
+  return {
+    ...product,
+    image: product.thumbnail || product.images?.[0] || "",
+    rating: {
+      rate: product.rating ?? 0,
+      count: product.reviews?.length ?? 0,
+    },
+  };
+}
 
+// Mengambil seluruh daftar produk.
 export async function getProducts() {
   try {
-    const res = await fetch(`${BASE_URL}/products`, {
+    const res = await fetch(`${BASE_URL}/products?limit=0`, {
       headers: {
         Accept: "application/json",
       },
@@ -16,50 +28,53 @@ export async function getProducts() {
     });
 
     if (!res.ok) {
-      throw new Error(`FakeStore API returned HTTP ${res.status}`);
+      throw new Error(`DummyJSON returned HTTP ${res.status}`);
     }
 
-    const products = await res.json();
+    const data = await res.json();
 
-    if (!Array.isArray(products)) {
-      throw new Error("FakeStore API did not return a product list");
+    if (!Array.isArray(data.products)) {
+      throw new Error("Invalid product list from DummyJSON");
     }
 
-    return products;
+    return data.products.map(normalizeProduct);
   } catch (error) {
-    console.error("[getProducts] Failed to load products:", error);
+    console.error("[getProducts] Failed:", error);
     throw error;
   }
 }
 
-
-// Mengambil satu produk berdasarkan ID
+// Mengambil detail satu produk berdasarkan ID.
 export async function getProduct(id) {
   try {
     const res = await fetch(`${BASE_URL}/products/${id}`, {
-      headers: { Accept: "application/json" },
-      next: { revalidate: REVALIDATE_SECONDS },
+      headers: {
+        Accept: "application/json",
+      },
+      next: {
+        revalidate: REVALIDATE_SECONDS,
+      },
     });
 
+    if (res.status === 404) return null;
+
     if (!res.ok) {
-      console.error(`Gagal mengambil produk ID ${id}: ${res.status}`);
-      return null;
+      throw new Error(`DummyJSON returned HTTP ${res.status}`);
     }
 
-    const text = await res.text();
+    const product = await res.json();
 
-    if (!text) return null;
+    if (!product || !product.id) return null;
 
-    const product = JSON.parse(text);
-
-    return product?.id ? product : null;
+    return normalizeProduct(product);
   } catch (error) {
-    console.error("Error getProduct:", error);
-    return null;
+    console.error("[getProduct] Failed:", error);
+    throw error;
   }
 }
 
-// Membuat slug dari nama dan ID produk
+// Contoh: "Essence Mascara" + 1
+// menjadi "essence-mascara-1".
 export function toSlug(title, id) {
   const words = title
     .toLowerCase()
@@ -71,13 +86,13 @@ export function toSlug(title, id) {
   return words ? `${words}-${id}` : String(id);
 }
 
-// Mengambil ID dari slug
+// Mengambil ID dari slug produk.
 export function idFromSlug(slug) {
   const match = slug.match(/(?:^|-)(\d+)$/);
   return match ? Number(match[1]) : null;
 }
 
-// Format harga ke USD
+// Format harga ke mata uang USD.
 export function formatPrice(value) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",

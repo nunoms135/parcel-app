@@ -9,7 +9,9 @@ const nextConfig = {
   reactCompiler: true,
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "fakestoreapi.com", pathname: "/img/**" },
+      { protocol: "https",
+        hostname: "cdn.dummyjson.com", 
+      },
     ],
   },
   
