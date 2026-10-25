@@ -3,20 +3,35 @@ const BASE_URL = "https://fakestoreapi.com";
 const REVALIDATE_SECONDS = 3600;
 
 // Mengambil semua produk
+
 export async function getProducts() {
-  const res = await fetch(`${BASE_URL}/products`, {
-    headers: { Accept: "application/json" },
-    next: { revalidate: REVALIDATE_SECONDS },
-  });
+  try {
+    const res = await fetch(`${BASE_URL}/products`, {
+      headers: {
+        Accept: "application/json",
+      },
+      next: {
+        revalidate: REVALIDATE_SECONDS,
+      },
+    });
 
-  if (!res.ok) {
-    throw new Error(
-      `Could not load products (status ${res.status}).`
-    );
+    if (!res.ok) {
+      throw new Error(`FakeStore API returned HTTP ${res.status}`);
+    }
+
+    const products = await res.json();
+
+    if (!Array.isArray(products)) {
+      throw new Error("FakeStore API did not return a product list");
+    }
+
+    return products;
+  } catch (error) {
+    console.error("[getProducts] Failed to load products:", error);
+    throw error;
   }
-
-  return res.json();
 }
+
 
 // Mengambil satu produk berdasarkan ID
 export async function getProduct(id) {
