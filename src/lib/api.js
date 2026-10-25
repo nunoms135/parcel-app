@@ -1,34 +1,50 @@
+
 const BASE_URL = "https://fakestoreapi.com";
 const REVALIDATE_SECONDS = 3600;
 
+// Mengambil semua produk
 export async function getProducts() {
   const res = await fetch(`${BASE_URL}/products`, {
     headers: { Accept: "application/json" },
     next: { revalidate: REVALIDATE_SECONDS },
   });
+
   if (!res.ok) {
-    throw new Error(`Could not load products (status ${res.status}).`);
+    throw new Error(
+      `Could not load products (status ${res.status}).`
+    );
   }
+
   return res.json();
 }
 
+// Mengambil satu produk berdasarkan ID
 export async function getProduct(id) {
-  const res = await fetch(`${BASE_URL}/products/${id}`, {
-    headers: { Accept: "application/json" },
-    next: { revalidate: REVALIDATE_SECONDS },
-  });
-  if (!res.ok) return null;
-  // FakeStore returns an empty body (status 200) for ids that don't exist.
-  const text = await res.text();
-  if (!text) return null;
   try {
-    return JSON.parse(text);
-  } catch {
+    const res = await fetch(`${BASE_URL}/products/${id}`, {
+      headers: { Accept: "application/json" },
+      next: { revalidate: REVALIDATE_SECONDS },
+    });
+
+    if (!res.ok) {
+      console.error(`Gagal mengambil produk ID ${id}: ${res.status}`);
+      return null;
+    }
+
+    const text = await res.text();
+
+    if (!text) return null;
+
+    const product = JSON.parse(text);
+
+    return product?.id ? product : null;
+  } catch (error) {
+    console.error("Error getProduct:", error);
     return null;
   }
 }
 
-/** "Mens Casual Slim Fit" + 4 -> "mens-casual-slim-fit-4" */
+// Membuat slug dari nama dan ID produk
 export function toSlug(title, id) {
   const words = title
     .toLowerCase()
@@ -36,19 +52,20 @@ export function toSlug(title, id) {
     .replace(/^-+|-+$/g, "")
     .slice(0, 60)
     .replace(/-+$/g, "");
+
   return words ? `${words}-${id}` : String(id);
 }
 
-/** Pulls the product id back out of a slug. */
+// Mengambil ID dari slug
 export function idFromSlug(slug) {
   const match = slug.match(/(?:^|-)(\d+)$/);
   return match ? Number(match[1]) : null;
 }
 
+// Format harga ke USD
 export function formatPrice(value) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
   }).format(value);
 }
-
